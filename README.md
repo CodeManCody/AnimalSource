@@ -27,3 +27,5 @@ Example of the Animal database:
   .
 ]
 ```
+
+![Test Image 1](./AnimalSource.png)
