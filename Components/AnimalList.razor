@@ -1,0 +1,117 @@
+@using Microsoft.AspNetCore.Components.Web
+@using AnimalSource.Models
+@using AnimalSource.Services
+@inject JsonFileAnimalService AnimalService
+
+<div class="card-columns">
+@foreach (var animal in AnimalService.GetAnimals())
+{
+    <div class="card" 
+        @onclick="@(e => SelectAnimal(animal.Id))"
+        data-toggle="modal" 
+        data-target="#animalModal">
+
+        <img class="card-img" src="@animal.Image">
+        <h5 class="label">@animal.Species</h5>
+    </div>
+}
+</div>
+
+@if (selectedAnimal != null)
+{
+    <div class="modal fade" id="animalModal" tabindex="-1" role="dialog" aria-labelledby="animalType" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="animalType">@selectedAnimal.Species</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="card">
+                        <img class="card-img" src="@selectedAnimal.Image">
+
+                        <div class="card-body">
+                            <p class="card-text">
+                                <div>Type: @selectedAnimal.Type</div>
+                                <div>Species: @selectedAnimal.Species</div>
+                                <div>Size: @selectedAnimal.Size</div>
+                                <div>Age: @selectedAnimal.Age</div>
+                                <div>Endangered: @selectedAnimal.Endangered</div>
+                                <div>Current Danger Level: @GetCurrentDangerLevel()</div>
+                                <a href="@selectedAnimal.Url" target="_blank">Wiki</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    @if(dangerLevelsCount == 0)
+                    {
+                        <span>Be the first to enter a Danger Level!</span>
+                    }
+                    else
+                    {
+                        <span>@dangerLevelsCount Danger Level @entryLabel</span>
+                    }
+                    @for(int i=1; i<11; i++)
+                    {
+                        var currentStar = i;
+                        if(i<=currentDangerLevel)
+                        {
+                            <span class="fa fa-star checked" @onclick="@(e => SubmitEntry(currentStar))"></span>
+                        }
+                        else
+                        {
+                            <span class="fa fa-star" @onclick="@(e => SubmitEntry(currentStar))"></span>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+@code {
+    Animal selectedAnimal;
+    int selectedAnimalId;
+
+    void SelectAnimal(int animalId)
+    {
+        selectedAnimalId = animalId;
+        selectedAnimal = AnimalService.GetAnimals().First(x => x.Id == animalId);
+        GetCurrentDangerLevel();
+    }
+    
+    int currentDangerLevel = 0;
+    int dangerLevelsCount = 0;
+    string entryLabel;
+
+    int GetCurrentDangerLevel()
+    {
+        if(selectedAnimal.DangerLevels == null)
+        {
+            currentDangerLevel = 0;
+            dangerLevelsCount = 0;
+        }
+        else
+        {
+            dangerLevelsCount = selectedAnimal.DangerLevels.Count();
+            entryLabel = dangerLevelsCount > 1 ? "Entries" : "Entry";
+            currentDangerLevel = selectedAnimal.DangerLevels.Sum() / dangerLevelsCount;
+        }
+
+        System.Console.WriteLine($"Current Danger Level for {selectedAnimal.Species}: {currentDangerLevel}");
+        return currentDangerLevel;
+    }
+
+    void SubmitEntry(int dangerLevel)
+    {
+        System.Console.WriteLine($"Entry received for {selectedAnimal.Species}: {dangerLevel}");
+        AnimalService.AddDangerLevel(selectedAnimalId, dangerLevel);
+        SelectAnimal(selectedAnimalId);
+    }
+    
+}

@@ -1,17 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using AnimalSource.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.EntityFrameworkCore;
-using AnimalSource.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using AnimalSource.Services;
 
 namespace AnimalSource
 {
@@ -33,6 +28,9 @@ namespace AnimalSource
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddRazorPages();
+            services.AddTransient<JsonFileAnimalService>();
+            services.AddControllers();
+            services.AddServerSideBlazor();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -58,7 +56,34 @@ namespace AnimalSource
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseEndpoints(endpoints => { endpoints.MapRazorPages(); });
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapRazorPages();
+                endpoints.MapControllers();
+                endpoints.MapBlazorHub();
+
+                /*
+                endpoints.MapGet("/animals", (context) => 
+                {
+                    var animals = app.ApplicationServices.GetService<JsonFileAnimalService>().GetAnimals();
+                    
+                    StringBuilder animalBuilder = new StringBuilder();
+                    animalBuilder.Append("[");
+                    
+                    foreach (Animal animal in animals)
+                    {
+                        animalBuilder.Append(animal.ToString());
+                        
+                        if (!animal.Equals(animals.Last()))
+                            animalBuilder.Append(",\n");
+                    }
+
+                    animalBuilder.Append("]");
+                    
+                    return context.Response.WriteAsync(animalBuilder.ToString());
+                });
+                */
+            });
         }
     }
 }
